@@ -11,8 +11,8 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    expose:
-      - "3306"
+    ports:
+      - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
     networks:
