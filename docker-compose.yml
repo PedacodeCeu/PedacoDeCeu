@@ -22,7 +22,21 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
   backend:
     build:
       context: ./PedacodeCeu-Back
@@ -34,12 +48,16 @@ services:
     environment:
       DB_HOST: database
       DB_PORT: 3306
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - "3000:3000"
     volumes:
       - ./PedacodeCeu-Back/uploads:/app/uploads
     depends_on:
       database:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - app-network
@@ -73,6 +91,7 @@ services:
 
 volumes:
   db_data:
+  redis_data:
 
 networks:
   app-network:
