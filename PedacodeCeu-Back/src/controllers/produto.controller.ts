@@ -5,6 +5,7 @@ import Produto from "../models/Produto";
 import Categoria from "../models/Categoria";
 import { RespostaPaginada } from "../types";
 import { PASTA_UPLOADS } from "../config/upload";
+import { lerCache, salvarCache, invalidarCache } from "../services/cache";
 
 function removerArquivoImagem(nomeArquivo: string | null) {
   if (!nomeArquivo) return;
@@ -21,6 +22,10 @@ class ProdutoController {
     const pagina = parseInt(req.query.pagina as string) || 1;
     const limite = parseInt(req.query.limite as string) || 10;
     const offset = (pagina - 1) * limite;
+
+    const chave = `produtos:lista:${pagina}:${limite}`;
+    const emCache = await lerCache<RespostaPaginada<Produto>>(chave);
+    if (emCache) return res.status(200).json(emCache);
 
     const { count, rows } = await Produto.findAndCountAll({
       limit: limite,
@@ -39,11 +44,18 @@ class ProdutoController {
       },
     };
 
+    await salvarCache(chave, resposta);
+
     return res.status(200).json(resposta);
   }
 
   static async getById(req: Request, res: Response) {
     const id = String(req.params.id);
+
+    const chave = `produtos:item:${id}`;
+    const emCache = await lerCache<Produto>(chave);
+    if (emCache) return res.status(200).json(emCache);
+
     const produto = await Produto.findByPk(id, {
       include: [{ model: Categoria, as: "categoria" }],
     });
@@ -51,6 +63,8 @@ class ProdutoController {
     if (!produto) {
       return res.status(404).json({ message: "Produto não encontrado" });
     }
+
+    await salvarCache(chave, produto);
 
     return res.status(200).json(produto);
   }
@@ -90,6 +104,8 @@ class ProdutoController {
       categoriaId,
     });
 
+    await invalidarCache("produtos:");
+
     return res.status(201).json(produto);
   }
 
@@ -120,7 +136,6 @@ class ProdutoController {
       return res.status(400).json({ message: "Preço inválido" });
     }
 
-    // Só troca a imagem se veio um arquivo novo; senão mantém a atual
     const imagemAntiga = produto.imagem;
     const novaImagem = arquivo ? arquivo.filename : produto.imagem;
 
@@ -138,6 +153,8 @@ class ProdutoController {
       removerArquivoImagem(imagemAntiga);
     }
 
+    await invalidarCache("produtos:");
+
     return res.status(200).json(produto);
   }
 
@@ -151,6 +168,9 @@ class ProdutoController {
 
     removerArquivoImagem(produto.imagem);
     await produto.destroy();
+
+    await invalidarCache("produtos:");
+
     return res.status(204).send();
   }
 }
