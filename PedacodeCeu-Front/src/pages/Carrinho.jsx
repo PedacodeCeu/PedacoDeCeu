@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCarrinho } from '../context/CarrinhoContext';
 import { useAuth } from '../context/AuthContext';
 import { criarPedido } from '../services/api';
+import { ShoppingCart } from 'lucide-react';
 
 export default function Carrinho() {
   const { itens, total, alterarQuantidade, removerItem, limparCarrinho } = useCarrinho();
@@ -30,7 +31,9 @@ export default function Carrinho() {
   if (itens.length === 0) {
     return (
       <div className="carrinho-vazio">
-        <span>🛒</span>
+        <span>
+          <ShoppingCart size={96} color="#4b2c20" strokeWidth={2} />
+        </span>
         <h2>Seu carrinho está vazio</h2>
         <p>Adicione produtos para continuar</p>
         <button className="card-button" onClick={() => navigate('/')}>

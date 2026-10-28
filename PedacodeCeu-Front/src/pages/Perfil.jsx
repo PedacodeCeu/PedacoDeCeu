@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { editarUsuario } from "../services/api";
 import { validarCPF, validarSenha, formatarCPF } from "../services/validacoes";
+import { User } from 'lucide-react';
 import CampoTexto from "../componentes/CampoTexto";
 import Botao from "../componentes/Botao";
 import MensagemErro from "../componentes/MensagemErro";
@@ -55,7 +56,7 @@ export default function Perfil() {
 
   return (
     <div className="pagina-perfil">
-      <h2>👤 Meu Perfil</h2>
+      <h2><User size={24} color="#4b2c20" /> Meu Perfil</h2>
       <div className="perfil-form">
         <MensagemErro mensagem={erroApi} />
         {sucesso && (

@@ -1,13 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './Footer.css';
+import { Cookie } from 'lucide-react';
 
 function Footer() {
   return (
     <footer className="footer">
       <div className="footer-top">
         <div className="footer-bloco">
-          <h3>🍰 Pedaço do Céu</h3>
+          <h3>
+            <Cookie size={24} color="#d2b48c" strokeWidth={2} />
+            Pedaço do Céu
+          </h3>
           <p>Doces artesanais feitos com carinho para adoçar o seu dia.</p>
         </div>
 
@@ -27,7 +31,7 @@ function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <p>Desenvolvido por: Beatriz Gomes Santana</p>
+        <p>Desenvolvido por: Beatriz Gomes Santana e Francesco Gris</p>
       </div>
     </footer>
   );

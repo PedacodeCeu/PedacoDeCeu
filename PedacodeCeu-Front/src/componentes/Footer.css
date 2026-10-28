@@ -19,6 +19,9 @@
 }
 
 .footer-bloco h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 1.3rem;
   color: #d2b48c;
   margin-bottom: 4px;

@@ -1,9 +1,10 @@
 import React from 'react';
+import { Cookie } from 'lucide-react';
 
 export default function Sobre() {
   return (
     <div className="pagina-sobre">
-      <h1>🍰 Sobre a Pedaço do Céu</h1>
+      <h1><Cookie size={24} color="#4b2c20" strokeWidth={2} /> Sobre a Pedaço do Céu</h1>
       <p>
         A Pedaço do Céu é uma padaria especializada em doces artesanais, 
         feitos com ingredientes selecionados e muito carinho. Cada produto 

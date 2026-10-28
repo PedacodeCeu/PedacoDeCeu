@@ -58,7 +58,7 @@ export default function Home() {
 
       <section className="destaques">
         <h2>
-          {categoriaFiltro ? '✨ Destaques da Categoria ✨' : '✨ Produtos em Destaque ✨'}
+          {categoriaFiltro ? ' Destaques da Categoria ' : ' Produtos em Destaque '}
         </h2>
         {carregando ? (
           <p>Carregando...</p>
@@ -75,7 +75,7 @@ export default function Home() {
 
       <section className="destaques">
         <h2>
-          {categoriaFiltro ? '🍰 Produtos da Categoria' : '🍰 Todos os Nossos Produtos'}
+          {categoriaFiltro ? ' Produtos da Categoria' : ' Todos os Nossos Produtos'}
         </h2>
         {carregando ? (
           <p>Carregando...</p>

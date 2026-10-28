@@ -5,6 +5,7 @@ import { validarEmail } from '../services/validacoes';
 import CampoTexto from '../componentes/CampoTexto';
 import Botao from '../componentes/Botao';
 import MensagemErro from '../componentes/MensagemErro';
+import { Cookie } from 'lucide-react';
 
 export default function Login() {
   const { login } = useAuth();
@@ -42,7 +43,7 @@ export default function Login() {
   return (
     <div className="pagina-auth">
       <div className="formulario-auth">
-        <h2>🍰 Entrar</h2>
+        <h2><Cookie size={24} color="#4b2c20" strokeWidth={2} /> Entrar</h2>
         <MensagemErro mensagem={erroApi} />
         <CampoTexto
           id="email"
