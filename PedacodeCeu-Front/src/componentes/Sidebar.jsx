@@ -1,8 +1,11 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEffect, useState } from 'react';
+import { House, Package, User, ClipboardList, FolderOpen, Users } from 'lucide-react';
 import { listarCategorias } from '../services/api';
 import './Sidebar.css';
+
+const ICONE = { size: 18, strokeWidth: 1.75 };
 
 function Sidebar() {
   const { usuario, isAdmin } = useAuth();
@@ -29,7 +32,9 @@ function Sidebar() {
       <h2 className="sidebar-titulo">Categorias</h2>
       <ul className="sidebar-lista">
         <li className="sidebar-item">
-          <NavLink to="/" end> Início</NavLink>
+          <NavLink to="/" end>
+            <House {...ICONE} /> Início
+          </NavLink>
         </li>
 
         {categorias.length > 0 && (
@@ -37,11 +42,8 @@ function Sidebar() {
             <li className="sidebar-separador" />
             {categorias.map((cat) => (
               <li key={cat.id} className="sidebar-item">
-                <button
-                  className="sidebar-btn"
-                  onClick={() => handleCategoria(cat.id)}
-                >
-                   {cat.nome}
+                <button className="sidebar-btn" onClick={() => handleCategoria(cat.id)}>
+                  {cat.nome}
                 </button>
               </li>
             ))}
@@ -52,10 +54,14 @@ function Sidebar() {
           <>
             <li className="sidebar-separador" />
             <li className="sidebar-item">
-              <NavLink to="/pedidos">📦 Meus Pedidos</NavLink>
+              <NavLink to="/pedidos">
+                <Package {...ICONE} /> Meus Pedidos
+              </NavLink>
             </li>
             <li className="sidebar-item">
-              <NavLink to="/perfil">👤 Meu Perfil</NavLink>
+              <NavLink to="/perfil">
+                <User {...ICONE} /> Meu Perfil
+              </NavLink>
             </li>
           </>
         )}
@@ -65,13 +71,19 @@ function Sidebar() {
             <li className="sidebar-separador" />
             <p className="sidebar-secao">Administração</p>
             <li className="sidebar-item">
-              <NavLink to="/admin/produtos">📋 Produtos</NavLink>
+              <NavLink to="/admin/produtos">
+                <ClipboardList {...ICONE} /> Produtos
+              </NavLink>
             </li>
             <li className="sidebar-item">
-              <NavLink to="/admin/categorias">📂 Categorias</NavLink>
+              <NavLink to="/admin/categorias">
+                <FolderOpen {...ICONE} /> Categorias
+              </NavLink>
             </li>
             <li className="sidebar-item">
-              <NavLink to="/admin/usuarios">👥 Usuários</NavLink>
+              <NavLink to="/admin/usuarios">
+                <Users {...ICONE} /> Usuários
+              </NavLink>
             </li>
           </>
         )}

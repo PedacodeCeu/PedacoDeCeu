@@ -1,4 +1,4 @@
-.navbar {
+﻿.navbar {
   position: fixed;
   top: 0;
   left: 0;
@@ -58,11 +58,11 @@
   background-color: #c4a07a;
 }
 
-svg {
+.carrinho-btn svg {
   color: #F3E9DC;
 }
 
-svg:hover {
+.carrinho-btn:hover svg {
   color: #c4a07a;
 } 
 
