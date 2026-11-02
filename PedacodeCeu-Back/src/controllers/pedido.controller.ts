@@ -5,6 +5,14 @@ import Produto from "../models/Produto";
 import Usuario from "../models/Usuario";
 import { AuthRequest } from "../middlewares/auth.middlewares";
 import { RespostaPaginada } from "../types";
+import { publicarPedidoEntregue } from "../services/eventos";
+
+const STATUS_VALIDOS = ["pendente", "confirmado", "entregue", "cancelado"];
+
+async function produtoIdsDoPedido(pedidoId: string): Promise<string[]> {
+  const itens = await PedidoItem.findAll({ where: { pedidoId }, attributes: ["produtoId"] });
+  return itens.map((item) => item.produtoId);
+}
 
 class PedidoController {
 
@@ -94,11 +102,21 @@ class PedidoController {
     try {
       const { status, itens } = req.body;
       const usuarioId = req.usuario?.id;
+      const isAdmin = req.usuario?.role === "admin";
 
       if (!usuarioId) {
         res.status(401).json({ message: "Usuário não autenticado" });
         return;
       }
+
+      if (status && !STATUS_VALIDOS.includes(status)) {
+        res.status(400).json({ message: "Status inválido" });
+        return;
+      }
+
+      // Cliente comum sempre cria o pedido como "pendente". Sem isso, alguém poderia criar
+      // um pedido já "entregue" e ganhar o direito de avaliar um produto que não recebeu.
+      const statusInicial = isAdmin && status ? status : "pendente";
 
       if (!itens || itens.length === 0) {
         res.status(400).json({ message: "O pedido deve ter ao menos um item" });
@@ -119,7 +137,7 @@ class PedidoController {
         total += produto.preco * item.quantidade;
       }
 
-      const pedido = await Pedido.create({ usuarioId, status: status || "pendente", total });
+      const pedido = await Pedido.create({ usuarioId, status: statusInicial, total });
 
       for (const item of itens) {
         const produto = await Produto.findByPk(String(item.produtoId));
@@ -134,6 +152,10 @@ class PedidoController {
       const pedidoCriado = await Pedido.findByPk(pedido.id, {
         include: [{ model: PedidoItem, as: "itens", include: [{ model: Produto, as: "produto" }] }],
       });
+
+      if (statusInicial === "entregue") {
+        await publicarPedidoEntregue(pedido.id, usuarioId, await produtoIdsDoPedido(pedido.id));
+      }
 
       res.status(201).json(pedidoCriado);
     } catch (error) {
@@ -159,9 +181,9 @@ class PedidoController {
       }
 
       const { status, itens } = req.body;
-      const statusValidos = ["pendente", "confirmado", "entregue", "cancelado"];
+      const statusAnterior = pedido.status;
 
-      if (status && !statusValidos.includes(status)) {
+      if (status && !STATUS_VALIDOS.includes(status)) {
         res.status(400).json({ message: "Status inválido" });
         return;
       }
@@ -209,6 +231,12 @@ class PedidoController {
       const pedidoAtualizado = await Pedido.findByPk(pedido.id, {
         include: [{ model: PedidoItem, as: "itens", include: [{ model: Produto, as: "produto" }] }],
       });
+
+      // Evento de domínio: o pedido acabou de passar para "entregue".
+      // O serviço de avaliações assina este canal para saber quem pode avaliar cada produto.
+      if (pedido.status === "entregue" && statusAnterior !== "entregue") {
+        await publicarPedidoEntregue(pedido.id, pedido.usuarioId, await produtoIdsDoPedido(pedido.id));
+      }
 
       res.status(200).json(pedidoAtualizado);
     } catch (error) {

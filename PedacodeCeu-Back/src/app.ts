@@ -9,6 +9,8 @@ import ProdutoController from "./controllers/produto.controller";
 import UsuarioController from "./controllers/usuario.controller";
 import PedidoController from "./controllers/pedido.controller";
 import upload from "./config/upload";
+import internoMiddleware from "./middlewares/interno.middleware";
+import InternoController from "./controllers/interno.controller";
 
 const app = express();
 app.use(express.json());
@@ -46,6 +48,9 @@ router.post("/pedidos", authMiddleware, PedidoController.create);
 router.get("/pedidos/:id", authMiddleware, PedidoController.getById);
 router.put("/pedidos/:id", authMiddleware, PedidoController.update);
 router.delete("/pedidos/:id", authMiddleware, PedidoController.remove);
+
+// Rotas internas (serviço -> serviço). Bloqueadas no nginx e protegidas por X-Internal-Token.
+router.get("/internal/compras", internoMiddleware, InternoController.verificarCompra);
 
 app.use(router);
 

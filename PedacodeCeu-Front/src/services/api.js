@@ -194,3 +194,48 @@ export async function deletarPedido(id) {
   });
   return tratarResposta(res);
 }
+
+// ---------- Avaliações (microsserviço Python, roteado pelo nginx em /api/avaliacoes) ----------
+
+export async function resumoAvaliacoes(produtoId) {
+  const res = await fetch(`${BASE_URL}/avaliacoes/produto/${produtoId}/resumo`);
+  return tratarResposta(res);
+}
+
+export async function listarAvaliacoes(produtoId, pagina = 1, limite = 5) {
+  const res = await fetch(`${BASE_URL}/avaliacoes/produto/${produtoId}?pagina=${pagina}&limite=${limite}`);
+  return tratarResposta(res);
+}
+
+export async function minhaAvaliacao(produtoId) {
+  const res = await fetch(`${BASE_URL}/avaliacoes/produto/${produtoId}/minha`, {
+    headers: headersAutenticados(),
+  });
+  return tratarResposta(res);
+}
+
+export async function criarAvaliacao(dados) {
+  const res = await fetch(`${BASE_URL}/avaliacoes`, {
+    method: "POST",
+    headers: headersAutenticados(),
+    body: JSON.stringify({ produtoId: dados.produtoId, nota: dados.nota, comentario: dados.comentario }),
+  });
+  return tratarResposta(res);
+}
+
+export async function editarAvaliacao(id, dados) {
+  const res = await fetch(`${BASE_URL}/avaliacoes/${id}`, {
+    method: "PUT",
+    headers: headersAutenticados(),
+    body: JSON.stringify({ nota: dados.nota, comentario: dados.comentario }),
+  });
+  return tratarResposta(res);
+}
+
+export async function removerAvaliacao(id) {
+  const res = await fetch(`${BASE_URL}/avaliacoes/${id}`, {
+    method: "DELETE",
+    headers: headersAutenticados(),
+  });
+  return tratarResposta(res);
+}

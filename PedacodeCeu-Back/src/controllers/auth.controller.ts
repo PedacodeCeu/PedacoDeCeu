@@ -29,7 +29,7 @@ class AuthController {
       }
 
       const token = jwt.sign(
-        { id: usuario.id, email: usuario.email, role: usuario.role },
+        { id: usuario.id, nome: usuario.nome, email: usuario.email, role: usuario.role },
         process.env.JWT_SECRET as string,
         { expiresIn: "1d" }
       );
@@ -78,7 +78,7 @@ class AuthController {
       }
 
       const token = jwt.sign(
-        { id: usuario.id, email: usuario.email, role: usuario.role },
+        { id: usuario.id, nome: usuario.nome, email: usuario.email, role: usuario.role },
         process.env.JWT_SECRET as string,
         { expiresIn: "1d" }
       );
