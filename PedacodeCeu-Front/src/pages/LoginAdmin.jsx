@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { validarEmail } from '../services/validacoes';
+import { Lock } from 'lucide-react';
 import CampoTexto from '../componentes/CampoTexto';
 import MensagemErro from '../componentes/MensagemErro';
 
@@ -41,8 +42,10 @@ export default function LoginAdmin() {
   return (
     <div className="pagina-auth">
       <div className="formulario-auth">
-        <div className="admin-badge">🔐 Área Administrativa</div>
-        <h2>Login Administrador</h2>
+        <div className="admin-badge">
+          <Lock color="#4b2c20" strokeWidth={4} size={24} />
+          <h3>Área Administrativa</h3>
+        </div>
         <MensagemErro mensagem={erroApi} />
         <CampoTexto
           id="email"

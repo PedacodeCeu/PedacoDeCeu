@@ -454,6 +454,12 @@ a {
   text-align: center;
 }
 
+.formulario-auth h3 {
+  font-size: 1.5rem;
+  color: #4b2c20;
+  text-align: center;
+}
+
 .formulario-auth p {
   text-align: center;
   margin-top: 18px;
@@ -467,9 +473,11 @@ a {
 }
 
 .admin-badge {
-  background: #4b2c20;
-  color: #F3E9DC;
-  text-align: center;
+  color: #4b2c20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 0.85rem;
