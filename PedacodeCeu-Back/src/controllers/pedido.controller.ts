@@ -5,6 +5,7 @@ import Produto from "../models/Produto";
 import Usuario from "../models/Usuario";
 import { AuthRequest } from "../middlewares/auth.middlewares";
 import { RespostaPaginada } from "../types";
+import { publicarEvento } from "../services/eventos";
 
 class PedidoController {
 
@@ -133,6 +134,13 @@ class PedidoController {
 
       const pedidoCriado = await Pedido.findByPk(pedido.id, {
         include: [{ model: PedidoItem, as: "itens", include: [{ model: Produto, as: "produto" }] }],
+      });
+
+        await publicarEvento("pedido.criado", {
+        pedidoId: pedido.id,
+        usuarioId,
+        total,
+        status: pedido.status,
       });
 
       res.status(201).json(pedidoCriado);

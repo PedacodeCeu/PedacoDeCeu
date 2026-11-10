@@ -6,6 +6,7 @@ import Categoria from "../models/Categoria";
 import { RespostaPaginada } from "../types";
 import { PASTA_UPLOADS } from "../config/upload";
 import { lerCache, salvarCache, invalidarCache } from "../services/cache";
+import { publicarEvento } from "../services/eventos";
 
 function removerArquivoImagem(nomeArquivo: string | null) {
   if (!nomeArquivo) return;
@@ -105,6 +106,12 @@ class ProdutoController {
     });
 
     await invalidarCache("produtos:");
+
+    await publicarEvento("produto.criado", {
+      produtoId: produto.id,
+      nome: produto.nome,
+      preco: produto.preco,
+    });
 
     return res.status(201).json(produto);
   }
