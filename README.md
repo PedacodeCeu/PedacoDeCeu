@@ -101,3 +101,12 @@ npx playwright test
 ```
 
 > Os testes E2E requerem a aplicação rodando (`docker compose up -d`).
+
+Antes da primeira execução, crie o usuário admin dos testes: cadastre pelo site
+`admin@testepedacodoceu.com` com a senha `Admin@123` e mude o `role` dele para `admin` no banco.
+
+Os testes não deixam lixo no banco:
+
+- tudo o que um teste cria (usuário, categoria, produto, pedido, avaliação) é removido no fim do próprio teste, mesmo se ele falhar;
+- antes de começar, o `tests/e2e/global-setup.ts` remove sobras de execuções interrompidas (nomes começando com `E2E ` e e-mails `@playwright.com`);
+- CPF, e-mails e nomes são gerados a cada execução (`tests/e2e/helpers/dados.ts`), então os testes podem rodar quantas vezes quiser.

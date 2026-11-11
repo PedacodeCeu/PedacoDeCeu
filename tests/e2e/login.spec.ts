@@ -1,7 +1,5 @@
 import { test, expect } from '@playwright/test';
-
-const ADMIN_EMAIL = 'admin@testepedacodoceu.com';
-const ADMIN_SENHA = 'Admin@123';
+import { ADMIN_EMAIL, ADMIN_SENHA } from './helpers/dados';
 
 test('login com credenciais válidas redireciona para home', async ({ page }) => {
   await page.goto('/adm/login');
