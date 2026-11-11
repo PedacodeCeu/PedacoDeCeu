@@ -5,7 +5,7 @@ import Produto from "../models/Produto";
 import Usuario from "../models/Usuario";
 import { AuthRequest } from "../middlewares/auth.middlewares";
 import { RespostaPaginada } from "../types";
-import { publicarPedidoEntregue } from "../services/eventos";
+import { CANAIS, publicarEvento, publicarPedidoEntregue } from "../services/eventos";
 
 const STATUS_VALIDOS = ["pendente", "confirmado", "entregue", "cancelado"];
 
@@ -151,6 +151,13 @@ class PedidoController {
 
       const pedidoCriado = await Pedido.findByPk(pedido.id, {
         include: [{ model: PedidoItem, as: "itens", include: [{ model: Produto, as: "produto" }] }],
+      });
+
+      await publicarEvento(CANAIS.PEDIDO_CRIADO, {
+        pedidoId: pedido.id,
+        usuarioId,
+        total,
+        status: pedido.status,
       });
 
       if (statusInicial === "entregue") {
