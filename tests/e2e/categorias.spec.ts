@@ -1,43 +1,31 @@
-import { test, expect, Page } from '@playwright/test';
-
-const ADMIN_EMAIL = 'admin@testepedacodoceu.com';
-const ADMIN_SENHA = 'Admin@123';
-
-async function loginComoAdmin(page: Page): Promise<void> {
-  await page.goto('/adm/login');
-  await page.fill('#email', ADMIN_EMAIL);
-  await page.fill('#senha', ADMIN_SENHA);
-  await page.click('button:has-text("Entrar como Administrador")');
-  await expect(page).toHaveURL('/');
-  await page.waitForFunction(() => localStorage.getItem('token') !== null);
-  await page.waitForTimeout(500);
-}
+import { test, expect, loginComoAdmin } from './helpers/fixtures';
+import { nomeTeste } from './helpers/dados';
 
 test('listar categorias exibe a tabela', async ({ page }) => {
   await loginComoAdmin(page);
   await page.goto('/admin/categorias');
-  await page.waitForURL('/admin/categorias'); 
+  await page.waitForURL('/admin/categorias');
   await expect(page.locator('h2:has-text("📂 Categorias")')).toBeVisible();
   await expect(page.locator('table.tabela')).toBeVisible();
 });
 
-test('criar categoria com nome válido e retornar para a lista', async ({ page }) => {
+test('criar categoria com nome válido e retornar para a lista', async ({ page, limpeza }) => {
   await loginComoAdmin(page);
-
   await page.goto('/admin/categorias/nova');
 
-  const nomeCategoria = `Categoria Teste ${Date.now()}`;
+  const nomeCategoria = nomeTeste('Categoria');
   await page.fill('#nome', nomeCategoria);
 
+  const criada = limpeza.aguardarCriacao(page, 'categorias');
   await page.click('button:has-text("Criar categoria")');
+  await criada;
 
   await expect(page).toHaveURL('/admin/categorias');
-  await expect(page.locator(`text=${nomeCategoria}`)).toBeVisible();
+  await expect(page.locator('table.tabela')).toContainText(nomeCategoria);
 });
 
 test('criar categoria sem nome exibe erro de validação', async ({ page }) => {
   await loginComoAdmin(page);
-
   await page.goto('/admin/categorias/nova');
 
   await page.click('button:has-text("Criar categoria")');
@@ -48,7 +36,6 @@ test('criar categoria sem nome exibe erro de validação', async ({ page }) => {
 
 test('criar categoria com nome só de espaços exibe erro de validação', async ({ page }) => {
   await loginComoAdmin(page);
-
   await page.goto('/admin/categorias/nova');
 
   await page.fill('#nome', '   ');
@@ -58,45 +45,43 @@ test('criar categoria com nome só de espaços exibe erro de validação', async
   await expect(page).toHaveURL('/admin/categorias/nova');
 });
 
-test('editar categoria altera o nome e retorna para a lista', async ({ page }) => {
+test('editar categoria altera o nome e retorna para a lista', async ({ page, api, limpeza }) => {
+  // Preparação pela API: o foco do teste é a edição, não a criação
+  const categoria = await api.criarCategoria();
+  limpeza.registrar('categorias', categoria.id);
+
   await loginComoAdmin(page);
+  await page.goto('/admin/categorias');
 
-  await page.goto('/admin/categorias/nova');
-  const nomeOriginal = `Editar Depois ${Date.now()}`;
-  await page.fill('#nome', nomeOriginal);
-  await page.click('button:has-text("Criar categoria")');
-  await expect(page).toHaveURL('/admin/categorias');
-
-  const linha = page.locator('tr', { hasText: nomeOriginal });
-  await expect(linha).toBeVisible(); // aguarda a linha aparecer
+  // Só dentro da tabela: a barra lateral também lista as categorias
+  const linha = page.locator('table.tabela tr', { hasText: categoria.nome });
+  await expect(linha).toBeVisible();
   await linha.locator('button.btn-sm--editar').click();
 
   await expect(page).toHaveURL(/\/admin\/categorias\/editar\//);
+  await expect(page.locator('#nome')).toHaveValue(categoria.nome);
 
-  await expect(page.locator('#nome')).not.toHaveValue('');
-
-  const nomeAtualizado = `Categoria Editada ${Date.now()}`;
+  const nomeAtualizado = nomeTeste('Categoria Editada');
   await page.fill('#nome', nomeAtualizado);
   await page.click('button:has-text("Salvar alterações")');
 
   await expect(page).toHaveURL('/admin/categorias');
-  await expect(page.locator(`text=${nomeAtualizado}`)).toBeVisible();
+  await expect(page.locator('table.tabela')).toContainText(nomeAtualizado);
 });
 
-test('excluir categoria remove da lista', async ({ page }) => {
+test('excluir categoria remove da lista', async ({ page, api, limpeza }) => {
+  const categoria = await api.criarCategoria();
+  limpeza.registrar('categorias', categoria.id); // se o teste falhar antes de excluir, a limpeza remove
+
   await loginComoAdmin(page);
+  await page.goto('/admin/categorias');
 
-  await page.goto('/admin/categorias/nova');
-  const nomeParaDeletar = `Deletar Cat ${Date.now()}`;
-  await page.fill('#nome', nomeParaDeletar);
-  await page.click('button:has-text("Criar categoria")');
-  await expect(page).toHaveURL('/admin/categorias');
+  // Só dentro da tabela: a barra lateral também lista as categorias
+  const linha = page.locator('table.tabela tr', { hasText: categoria.nome });
+  await expect(linha).toBeVisible();
 
-  const linha = page.locator('tr', { hasText: nomeParaDeletar });
-  await expect(linha).toBeVisible({ timeout: 10000 }); // timeout maior
-
-  page.once('dialog', dialog => dialog.accept());
+  page.once('dialog', (dialog) => dialog.accept());
   await linha.locator('button.btn-sm--deletar').click();
 
-  await expect(page.locator(`text=${nomeParaDeletar}`)).not.toBeVisible();
+  await expect(page.locator('table.tabela tr', { hasText: categoria.nome })).toHaveCount(0);
 });
