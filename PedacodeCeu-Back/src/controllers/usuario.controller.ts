@@ -11,11 +11,16 @@ class UsuarioController {
     return res.status(200).json(usuarios);
   }
 
-  static async getById(req: Request, res: Response) {
-    const id = String(req.params.id);
-    const usuario = await Usuario.findByPk(id, {
-      attributes: ["id", "nome", "email", "cpf", "createdAt"],
-    });
+  static async getById(req: AuthRequest, res: Response) {
+  const id = String(req.params.id);
+
+  if (req.usuario?.id !== id && req.usuario?.role !== "admin") {
+    return res.status(403).json({ message: "Acesso negado" });
+  }
+
+  const usuario = await Usuario.findByPk(id, {
+    attributes: ["id", "nome", "email", "cpf", "createdAt"],
+  });
 
     if (!usuario) {
       return res.status(404).json({ message: "Usuário não encontrado" });

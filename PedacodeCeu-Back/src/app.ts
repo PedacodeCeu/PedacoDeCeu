@@ -25,7 +25,7 @@ router.post("/auth/login", AuthController.login);
 router.post("/auth/login/admin", AuthController.loginAdmin);
 
 router.post("/usuarios", UsuarioController.create);
-router.get("/usuarios", authMiddleware, UsuarioController.findAll);
+router.get("/usuarios", adminMiddleware, UsuarioController.findAll);
 router.get("/usuarios/:id", authMiddleware, UsuarioController.getById);
 router.put("/usuarios/:id", authMiddleware, UsuarioController.update);
 router.delete("/usuarios/:id", adminMiddleware, UsuarioController.remove);
