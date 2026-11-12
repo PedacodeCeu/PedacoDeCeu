@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { listarCategorias, deletarCategoria } from '../services/api';
+import { FolderOpen } from 'lucide-react';
 import Paginacao from '../componentes/Paginacao';
 import MensagemErro from '../componentes/MensagemErro';
 
@@ -48,7 +49,7 @@ useEffect(() => {
   return (
     <div className="pagina-crud">
       <div className="pagina-crud__topo">
-        <h2>📂 Categorias</h2>
+        <h2><FolderOpen /> Categorias</h2>
         <Link to="/admin/categorias/nova">
           <button className="botao botao--primario" style={{ width: 'auto' }}>+ Nova Categoria</button>
         </Link>
