@@ -11,8 +11,9 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    # Só a própria máquina acessa (DBeaver). Ninguém na rede alcança o banco.
     ports:
-      - "3307:3306"
+      - "127.0.0.1:3307:3306"
     volumes:
       - db_data:/var/lib/mysql
     networks:
@@ -26,8 +27,9 @@ services:
     image: redis:7-alpine
     container_name: redis-cache
     restart: always
-    ports:
-      - "6379:6379"
+    # Só a rede interna do Docker (back e avaliações). Sem porta publicada.
+    expose:
+      - "6379"
     volumes:
       - redis_data:/data
     networks:
@@ -50,8 +52,9 @@ services:
       DB_PORT: 3306
       REDIS_HOST: redis
       REDIS_PORT: 6379
-    ports:
-      - "3000:3000"
+    # Só a rede interna do Docker: o acesso de fora passa obrigatoriamente pelo nginx.
+    expose:
+      - "3000"
     volumes:
       - ./PedacodeCeu-Back/uploads:/app/uploads
     depends_on:
@@ -68,8 +71,9 @@ services:
     restart: always
     env_file:
       - ./PedacodeCeu-Avaliacoes/.env
+    # Só a própria máquina acessa (DBeaver).
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - avaliacoes_data:/var/lib/postgresql/data
     networks:
