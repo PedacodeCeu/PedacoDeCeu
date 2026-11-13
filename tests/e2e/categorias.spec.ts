@@ -5,7 +5,7 @@ test('listar categorias exibe a tabela', async ({ page }) => {
   await loginComoAdmin(page);
   await page.goto('/admin/categorias');
   await page.waitForURL('/admin/categorias');
-  await expect(page.locator('h2:has-text("📂 Categorias")')).toBeVisible();
+  await expect(page.locator('.pagina-crud__topo h2', { hasText: 'Categorias' })).toBeVisible();
   await expect(page.locator('table.tabela')).toBeVisible();
 });
 

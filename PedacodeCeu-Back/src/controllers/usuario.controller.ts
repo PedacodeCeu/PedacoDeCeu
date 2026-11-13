@@ -97,7 +97,10 @@ class UsuarioController {
       return res.status(400).json({ message: "Nome é obrigatório" });
     }
 
-    if (!senha || !validarSenha(senha)) {
+    // Na edição a senha é opcional: em branco = manter a atual.
+    // Só valida (e troca) quando o usuário digitou uma senha nova.
+    const trocarSenha = typeof senha === "string" && senha !== "";
+    if (trocarSenha && !validarSenha(senha)) {
       return res.status(400).json({
         message:
           "A senha deve ter no mínimo 8 caracteres, letra maiúscula, minúscula, número e caractere especial",
@@ -108,8 +111,20 @@ class UsuarioController {
       return res.status(400).json({ message: "CPF inválido" });
     }
 
-    const senhaCriptografada = await bcrypt.hash(senha, 10);
-    await usuario.update({ nome, senha: senhaCriptografada, cpf });
+    // O CPF é único no banco: sem esta checagem, usar o CPF de outro usuário
+    // estourava um erro 500 do MySQL em vez de uma mensagem clara.
+    if (cpf !== usuario.cpf) {
+      const cpfExiste = await Usuario.findOne({ where: { cpf } });
+      if (cpfExiste && cpfExiste.id !== usuario.id) {
+        return res.status(400).json({ message: "CPF já cadastrado" });
+      }
+    }
+
+    const dados: { nome: string; cpf: string; senha?: string } = { nome: nome.trim(), cpf };
+    if (trocarSenha) {
+      dados.senha = await bcrypt.hash(senha, 10);
+    }
+    await usuario.update(dados);
 
     return res.status(200).json({
       id: usuario.id,

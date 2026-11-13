@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { listarPedidos, deletarPedido, editarPedido } from '../services/api'; 
 import Paginacao from '../componentes/Paginacao';
 import MensagemErro from '../componentes/MensagemErro';
+import { Package } from 'lucide-react';
 
 const STATUS_CORES = {
   pendente:   { bg: '#ed8936', label: 'Pendente' },
@@ -61,7 +62,7 @@ export default function Pedidos() {
   return (
     <div className="pagina-crud">
       <div className="pagina-crud__topo">
-        <h2>📦 {isAdmin ? 'Todos os Pedidos' : 'Meus Pedidos'}</h2>
+        <h2><Package /> {isAdmin ? 'Todos os Pedidos' : 'Meus Pedidos'}</h2>
         {isAdmin && (
           <Link to="/pedidos/novo">
             <button className="botao botao--primario" style={{ width: 'auto' }}>+ Novo Pedido</button>
