@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 import crypto from "crypto";
 import { Request } from "express";
+import { BadRequestError } from "../errors/AppError";
 
 const PASTA_UPLOADS = path.join(__dirname, "..", "..", "uploads", "produtos");
 
@@ -28,11 +29,11 @@ function filtroDeArquivo(_req: Request, file: Express.Multer.File, cb: multer.Fi
   const extensao = path.extname(file.originalname).toLowerCase();
 
   if (!EXTENSOES_PERMITIDAS.includes(extensao)) {
-    return cb(new Error("Extensão de arquivo não permitida. Use jpg, jpeg, png ou webp."));
+    return cb(new BadRequestError("Extensão de arquivo não permitida. Use jpg, jpeg, png ou webp."));
   }
 
   if (!file.mimetype.startsWith("image/")) {
-    return cb(new Error("O arquivo enviado não é uma imagem."));
+    return cb(new BadRequestError("O arquivo enviado não é uma imagem."));
   }
 
   cb(null, true);
@@ -44,5 +45,17 @@ const upload = multer({
   limits: { fileSize: TAMANHO_MAXIMO },
 });
 
+// Apaga uma imagem da pasta de uploads. Arquivo que já não existe não é erro.
+export async function removerImagem(nomeArquivo: string | null | undefined): Promise<void> {
+  if (!nomeArquivo) return;
+  try {
+    await fs.promises.unlink(path.join(PASTA_UPLOADS, path.basename(nomeArquivo)));
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+      console.error("[upload] erro ao remover imagem:", (err as Error).message);
+    }
+  }
+}
+
 export default upload;
-export { PASTA_UPLOADS };
+export { PASTA_UPLOADS, TAMANHO_MAXIMO };

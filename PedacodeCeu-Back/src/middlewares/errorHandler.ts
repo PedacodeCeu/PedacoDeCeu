@@ -1,6 +1,8 @@
 import { ErrorRequestHandler, RequestHandler } from "express";
+import { MulterError } from "multer";
 import { ForeignKeyConstraintError, UniqueConstraintError } from "sequelize";
 import { AppError } from "../errors/AppError";
+import { TAMANHO_MAXIMO } from "../config/upload";
 
 export const rotaNaoEncontrada: RequestHandler = (_req, res) => {
   res.status(404).json({ message: "Rota não encontrada" });
@@ -35,12 +37,18 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     return;
   }
 
-  if (err?.name === "MulterError" || err?.message?.includes("imagem") || err?.message?.includes("Extensão")) {
-    console.warn(`[erro] ${requestId} 400 upload: ${err.message}`);
-    res.status(400).json({ message: err.message });
+  // Erros do próprio multer (arquivo grande demais, campo de arquivo inesperado...).
+  // Os erros de extensão/tipo de arquivo já chegam como BadRequestError, lançados no config/upload.ts.
+  if (err instanceof MulterError) {
+    const message =
+      err.code === "LIMIT_FILE_SIZE"
+        ? `A imagem deve ter no máximo ${TAMANHO_MAXIMO / (1024 * 1024)}MB`
+        : `Erro no envio do arquivo: ${err.message}`;
+    console.warn(`[erro] ${requestId} 400 upload: ${err.code}`);
+    res.status(400).json({ message });
     return;
   }
 
   console.error(`[erro] ${requestId} 500 ${req.method} ${req.originalUrl}`, err);
   res.status(500).json({ message: "Erro interno do servidor", requestId });
-};
+};

@@ -13,6 +13,7 @@ import internoMiddleware from "./middlewares/interno.middleware";
 import InternoController from "./controllers/interno.controller";
 import { requestLogger } from "./middlewares/requestLogger";
 import { errorHandler, rotaNaoEncontrada } from "./middlewares/errorHandler";
+import { limparUploadEmErro } from "./middlewares/limparUpload";
 
 const app = express();
 app.use(requestLogger);
@@ -58,6 +59,7 @@ router.get("/internal/compras", internoMiddleware, InternoController.verificarCo
 app.use(router);
 
 app.use(rotaNaoEncontrada);
+app.use(limparUploadEmErro);
 app.use(errorHandler);
 
-export default app;
+export default app;
