@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; 
 import { listarPedidos, deletarPedido, editarPedido } from '../services/api'; 
@@ -23,9 +23,7 @@ export default function Pedidos() {
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
 
-  useEffect(() => { buscar(); }, [pagina]);
-
-  async function buscar() {
+const buscar = useCallback(async () => {
     setCarregando(true);
     setErro('');
     try {
@@ -37,7 +35,11 @@ export default function Pedidos() {
     } finally {
       setCarregando(false);
     }
-  }
+  }, [pagina]);
+
+  useEffect(() => {
+    buscar();
+  }, [buscar]);
 
   async function handleDeletar(id) {
     if (!window.confirm('Deseja excluir este pedido?')) return;

@@ -16,8 +16,8 @@ export default function CategoriaForm() {
   const [carregando, setCarregando] = useState(false);
 
   useEffect(() => {
-    if (editando && id) carregarCategoria(id);
-  }, []);
+    if (id) carregarCategoria(id);
+  }, [id]);
 
   async function carregarCategoria(catId) {
     try {

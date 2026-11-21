@@ -97,11 +97,8 @@ jobs:
           node-version: "18"
       - name: Instalar dependências
         run: npm ci
-      # No CI, o react-scripts trata avisos do ESLint como erro (CI=true).
       - name: Gerar build de produção
         run: npm run build
-        env:
-          CI: "false"
 
   deploy:
     # Só roda depois que os três jobs passarem, e só em push na main (não em PR).

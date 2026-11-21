@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { listarProdutos, deletarProduto } from '../services/api';
 import Paginacao from '../componentes/Paginacao';
@@ -12,15 +12,7 @@ export default function Produtos() {
   const [carregando, setCarregando] = useState(false);
   const location = useLocation();
 
-  useEffect(() => {
-  buscarProdutos();
-}, [pagina]);
-
-useEffect(() => {
-  buscarProdutos();
-}, [location.key]);
-
-  async function buscarProdutos() {
+  const buscarProdutos = useCallback(async () => {
     setCarregando(true);
     setErro('');
     try {
@@ -32,7 +24,12 @@ useEffect(() => {
     } finally {
       setCarregando(false);
     }
-  }
+  }, [pagina]);
+
+  // Busca ao abrir a tela, ao trocar de página e ao voltar para esta rota (location.key muda a cada navegação).
+  useEffect(() => {
+    buscarProdutos();
+  }, [buscarProdutos, location.key]);
 
   async function handleDeletar(id) {
     if (!window.confirm('Deseja excluir este produto?')) return;
