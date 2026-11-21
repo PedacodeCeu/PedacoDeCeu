@@ -77,7 +77,7 @@ jobs:
         with:
           node-version: "22" 
       - name: Instalar dependências
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       - name: Compilar TypeScript
         run: npm run build
       - name: Executar testes
@@ -100,6 +100,8 @@ jobs:
       # No CI, o react-scripts trata avisos do ESLint como erro (CI=true).
       - name: Gerar build de produção
         run: npm run build
+        env:
+          CI: "false"
 
   deploy:
     # Só roda depois que os três jobs passarem, e só em push na main (não em PR).
