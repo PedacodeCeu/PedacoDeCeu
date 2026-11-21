@@ -11,8 +11,12 @@ import PedidoController from "./controllers/pedido.controller";
 import upload from "./config/upload";
 import internoMiddleware from "./middlewares/interno.middleware";
 import InternoController from "./controllers/interno.controller";
+import { requestLogger } from "./middlewares/requestLogger";
+import { errorHandler, rotaNaoEncontrada } from "./middlewares/errorHandler";
+import { limparUploadEmErro } from "./middlewares/limparUpload";
 
 const app = express();
+app.use(requestLogger);
 app.use(express.json());
 app.use(cors({ origin: ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "http://localhost:8080", "http://localhost:8081"], credentials: true }));
 
@@ -54,4 +58,8 @@ router.get("/internal/compras", internoMiddleware, InternoController.verificarCo
 
 app.use(router);
 
-export default app;
+app.use(rotaNaoEncontrada);
+app.use(limparUploadEmErro);
+app.use(errorHandler);
+
+export default app;

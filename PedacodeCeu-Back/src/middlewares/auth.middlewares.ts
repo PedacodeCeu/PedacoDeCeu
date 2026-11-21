@@ -2,73 +2,56 @@ import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import Usuario from "../models/Usuario";
 import { UsuarioPayload } from "../types";
+import { ForbiddenError, NotFoundError, UnauthorizedError } from "../errors/AppError";
 
 export interface AuthRequest extends Request {
   usuario?: UsuarioPayload;
 }
 
-async function authMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
-  const token = req.headers.authorization;
+// Lê o token "Bearer <jwt>", confere a assinatura e se o usuário ainda existe no banco.
+// Qualquer falha vira um AppError, que o errorHandler transforma na resposta HTTP.
+async function autenticar(req: AuthRequest): Promise<Usuario> {
+  const cabecalho = req.headers.authorization;
 
-  if (!token) {
-    return res.status(401).json({ message: "Token não fornecido" });
+  if (!cabecalho) {
+    throw new UnauthorizedError("Token não fornecido");
   }
 
-  const parts = token.split(" ");
-  if (parts.length !== 2) {
-    return res.status(401).json({ message: "Token inválido" });
+  const partes = cabecalho.split(" ");
+  if (partes.length !== 2) {
+    throw new UnauthorizedError("Token inválido");
   }
 
+  let decoded: UsuarioPayload;
   try {
-    const decoded = jwt.verify(
-      parts[1],
-      process.env.JWT_SECRET! as string
-    ) as UsuarioPayload;
-
-    const usuario = await Usuario.findByPk(decoded.id);
-    if (!usuario) {
-      return res.status(404).json({ message: "Usuário não encontrado" });
-    }
-
-    req.usuario = decoded;
-    return next();
-  } catch (err) {
-    return res.status(401).json({ message: "Token inválido ou expirado" });
+    decoded = jwt.verify(partes[1], process.env.JWT_SECRET as string) as UsuarioPayload;
+  } catch {
+    throw new UnauthorizedError("Token inválido ou expirado");
   }
+
+  const usuario = await Usuario.findByPk(decoded.id);
+  if (!usuario) {
+    throw new NotFoundError("Usuário não encontrado");
+  }
+
+  req.usuario = decoded;
+  return usuario;
 }
 
-export async function adminMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
-  const token = req.headers.authorization;
+async function authMiddleware(req: AuthRequest, _res: Response, next: NextFunction) {
+  await autenticar(req);
+  next();
+}
 
-  if (!token) {
-    return res.status(401).json({ message: "Token não fornecido" });
+// O papel é conferido no banco, não no token: quem perdeu o admin perde o acesso na hora.
+export async function adminMiddleware(req: AuthRequest, _res: Response, next: NextFunction) {
+  const usuario = await autenticar(req);
+
+  if (usuario.role !== "admin") {
+    throw new ForbiddenError("Acesso restrito a administradores");
   }
 
-  const parts = token.split(" ");
-  if (parts.length !== 2) {
-    return res.status(401).json({ message: "Token inválido" });
-  }
-
-  try {
-    const decoded = jwt.verify(
-      parts[1],
-      process.env.JWT_SECRET! as string
-    ) as UsuarioPayload;
-
-    const usuario = await Usuario.findByPk(decoded.id);
-    if (!usuario) {
-      return res.status(404).json({ message: "Usuário não encontrado" });
-    }
-
-    if (usuario.role !== "admin") {
-      return res.status(403).json({ message: "Acesso restrito a administradores" });
-    }
-
-    req.usuario = decoded;
-    return next();
-  } catch (err) {
-    return res.status(401).json({ message: "Token inválido ou expirado" });
-  }
+  next();
 }
 
 export default authMiddleware;
