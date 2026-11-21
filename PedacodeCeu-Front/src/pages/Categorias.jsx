@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { listarCategorias, deletarCategoria } from '../services/api';
@@ -14,15 +14,7 @@ export default function Categorias() {
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
 
-  useEffect(() => {
-  buscar();
-}, [pagina]);
-
-useEffect(() => {
-  buscar();
-}, [location.key]);
-
-  async function buscar() {
+  const buscar = useCallback(async () => {
     setCarregando(true);
     setErro('');
     try {
@@ -34,7 +26,12 @@ useEffect(() => {
     } finally {
       setCarregando(false);
     }
-  }
+  }, [pagina]);
+
+  // Busca ao abrir a tela, ao trocar de página e ao voltar para esta rota.
+  useEffect(() => {
+    buscar();
+  }, [buscar, location.key]);
 
   async function handleDeletar(id) {
     if (!window.confirm('Deseja excluir esta categoria?')) return;

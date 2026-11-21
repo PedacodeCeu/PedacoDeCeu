@@ -25,8 +25,8 @@ export default function ProdutoForm() {
 
   useEffect(() => {
     carregarCategorias();
-    if (editando && id) carregarProduto(id);
-  }, []);
+    if (id) carregarProduto(id);
+  }, [id]);
 
   async function carregarCategorias() {
     try {

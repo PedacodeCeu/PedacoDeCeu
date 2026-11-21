@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { criarPedido, editarPedido, listarPedidos, listarProdutos } from '../services/api';
-import { useAuth } from '../context/AuthContext';
 import Botao from '../componentes/Botao';
 import MensagemErro from '../componentes/MensagemErro';
 
@@ -10,7 +9,6 @@ const STATUS_OPTIONS = ['pendente', 'confirmado', 'entregue', 'cancelado'];
 export default function PedidoForm() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { usuario } = useAuth();
   const editando = Boolean(id);
 
   const [status, setStatus] = useState('pendente');
@@ -21,8 +19,8 @@ export default function PedidoForm() {
 
   useEffect(() => {
     carregarProdutos();
-    if (editando && id) carregarPedido(id);
-  }, []);
+    if (id) carregarPedido(id);
+  }, [id]);
 
   async function carregarProdutos() {
     try {

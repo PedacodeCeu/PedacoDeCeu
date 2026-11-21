@@ -1,5 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import MensagemErro from '../componentes/MensagemErro';
+
+// Não dependem de estado nem de props, então ficam fora do componente.
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
+function getHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${localStorage.getItem('token')}`,
+  };
+}
 
 export default function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -12,21 +22,7 @@ export default function AdminUsuarios() {
   const [salvando, setSalvando] = useState(false);
   const [erroModal, setErroModal] = useState('');
 
-  // ✅ CORRIGIDO (backend)
-  const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-
-  function getHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    };
-  }
-
-  useEffect(() => {
-    buscar();
-  }, []);
-
-  async function buscar() {
+  const buscar = useCallback(async () => {
     setCarregando(true);
     setErro('');
     try {
@@ -39,7 +35,11 @@ export default function AdminUsuarios() {
     } finally {
       setCarregando(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    buscar();
+  }, [buscar]);
 
   async function handleDeletar(id) {
     if (!window.confirm('Deseja excluir este usuário?')) return;
