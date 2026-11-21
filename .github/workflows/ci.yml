@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# O workflow só precisa ler o repositório.
+permissions:
+  contents: read
+
+jobs:
+  avaliacoes:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: PedacodeCeu-Avaliacoes
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Instalar dependências
+        run: pip install -r requirements-dev.txt
+      - name: Executar testes
+        run: pytest -q
+
+  back:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: PedacodeCeu-Back
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: pedacodoceu
+          MYSQL_USER: pedaco
+          MYSQL_PASSWORD: pedaco
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3306"
+      DB_NAME: pedacodoceu
+      DB_USER: pedaco
+      DB_PASS: pedaco
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: "6379"
+      JWT_SECRET: texto-mega-hipe-ultra-super-secreto
+      INTERNAL_TOKEN: qualquer-texto
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22" 
+      - name: Instalar dependências
+        run: npm ci
+      - name: Compilar TypeScript
+        run: npm run build
+      - name: Executar testes
+        run: npm test
+
+  front:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: PedacodeCeu-Front
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+      - name: Instalar dependências
+        run: npm ci
+      # No CI, o react-scripts trata avisos do ESLint como erro (CI=true).
+      - name: Gerar build de produção
+        run: npm run build
+
+  deploy:
+    # Só roda depois que os três jobs passarem, e só em push na main (não em PR).
+    needs: [avaliacoes, back, front]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+      # Cada imagem recebe o hash do commit como tag: é essa versão que permite o rollback.
+      - name: Build da imagem do back
+        run: docker build -t pedaco-back:${{ github.sha }} ./PedacodeCeu-Back
+      - name: Build da imagem do serviço de avaliações
+        run: docker build -t pedaco-avaliacoes:${{ github.sha }} ./PedacodeCeu-Avaliacoes
+      - name: Build da imagem do front
+        run: docker build -t pedaco-front:${{ github.sha }} ./PedacodeCeu-Front
+      # Esqueleto: o projeto não tem servidor de produção.
+      - name: Deploy (simulado)
+        run: |
+          echo "Deploy da versão ${{ github.sha }}"
+          echo "Estratégia: deploy simples com rollback."
+          echo "Rollback: subir de novo as imagens com a tag do último commit que funcionou."
