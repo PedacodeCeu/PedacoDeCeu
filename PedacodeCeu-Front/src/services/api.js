@@ -63,6 +63,30 @@ export async function editarUsuario(id, payload) {
   return tratarResposta(res);
 }
 
+export async function listarUsuarios() {
+  const res = await fetch(`${BASE_URL}/usuarios`, {
+    headers: headersAutenticados(),
+  });
+  return tratarResposta(res);
+}
+
+export async function deletarUsuario(id) {
+  const res = await fetch(`${BASE_URL}/usuarios/${id}`, {
+    method: "DELETE",
+    headers: headersAutenticados(),
+  });
+  return tratarResposta(res);
+}
+
+export async function alterarRoleUsuario(id, role) {
+  const res = await fetch(`${BASE_URL}/usuarios/${id}/role`, {
+    method: "PATCH",
+    headers: headersAutenticados(),
+    body: JSON.stringify({ role }),
+  });
+  return tratarResposta(res);
+}
+
 export async function listarCategorias(pagina = 1, limite = 100) {
   const token = getToken();
   const headers = token
