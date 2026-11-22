@@ -1,15 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import MensagemErro from '../componentes/MensagemErro';
-
-// Não dependem de estado nem de props, então ficam fora do componente.
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-
-function getHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
-  };
-}
+import { listarUsuarios, deletarUsuario, alterarRoleUsuario } from '../services/api';
 
 export default function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -26,9 +17,7 @@ export default function AdminUsuarios() {
     setCarregando(true);
     setErro('');
     try {
-      const res = await fetch(`${BASE_URL}/usuarios`, { headers: getHeaders() });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      const data = await listarUsuarios();
       setUsuarios(Array.isArray(data) ? data : data.dados ?? []);
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao carregar usuários');
@@ -44,14 +33,7 @@ export default function AdminUsuarios() {
   async function handleDeletar(id) {
     if (!window.confirm('Deseja excluir este usuário?')) return;
     try {
-      const res = await fetch(`${BASE_URL}/usuarios/${id}`, {
-        method: 'DELETE',
-        headers: getHeaders(),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message);
-      }
+      await deletarUsuario(id);
       await buscar();
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao excluir usuário');
@@ -75,14 +57,7 @@ export default function AdminUsuarios() {
     setSalvando(true);
     setErroModal('');
     try {
-      const res = await fetch(`${BASE_URL}/usuarios/${usuarioSelecionado.id}/role`, {
-        method: 'PATCH',
-        headers: getHeaders(),
-        body: JSON.stringify({ role: novoRole }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      await alterarRoleUsuario(usuarioSelecionado.id, novoRole);
 
       await buscar();
       fecharModal();
