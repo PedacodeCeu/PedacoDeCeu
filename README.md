@@ -110,3 +110,30 @@ Os testes não deixam lixo no banco:
 - tudo o que um teste cria (usuário, categoria, produto, pedido, avaliação) é removido no fim do próprio teste, mesmo se ele falhar;
 - antes de começar, o `tests/e2e/global-setup.ts` remove sobras de execuções interrompidas (nomes começando com `E2E ` e e-mails `@playwright.com`);
 - CPF, e-mails e nomes são gerados a cada execução (`tests/e2e/helpers/dados.ts`), então os testes podem rodar quantas vezes quiser.
+
+---
+
+## Versionamento
+
+O projeto segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/): cada versão tem o formato `MAJOR.MINOR.PATCH` (por exemplo, `1.4.1`).
+
+| Parte | Quando aumenta | Exemplo |
+|---|---|---|
+| **MAJOR** | Mudança que quebra compatibilidade (uma rota da API que muda de formato ou deixa de existir) | `1.4.1` → `2.0.0` |
+| **MINOR** | Funcionalidade nova, sem quebrar o que já existe | `1.4.1` → `1.5.0` |
+| **PATCH** | Correção de bug, sem funcionalidade nova | `1.4.1` → `1.4.2` |
+
+Ao aumentar uma parte, as da direita voltam a zero.
+
+### Como o número é escolhido
+
+Os commits seguem o padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/) (verificado pelo commitlint), e o tipo dos commits desde a última versão define a próxima:
+
+- algum `feat!:` ou `BREAKING CHANGE` → MAJOR
+- algum `feat:` → MINOR
+- só `fix:` → PATCH
+- só `ci:`, `docs:`, `test:`, `refactor:` ou `chore:` → não gera versão; entra na próxima
+
+### Quando uma versão é criada
+
+Não a cada PR: uma versão marca uma **entrega parcial** (uma funcionalidade concluída, uma etapa apresentada ou uma leva de correções). Ela é criada na `main`, depois do merge, como uma tag (`vX.Y.Z`) acompanhada de uma [Release](https://github.com/PedacodeCeu/PedacoDeCeu/releases) no GitHub com o resumo do que mudou.
