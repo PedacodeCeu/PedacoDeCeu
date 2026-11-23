@@ -13,6 +13,7 @@ Resiliência aplicada aqui:
 import asyncio
 import logging
 from dataclasses import dataclass
+from app.request_context import SEM_REQUISICAO, request_id_atual
 
 import httpx
 
@@ -63,8 +64,12 @@ class PedidosClient:
 
         for tentativa in range(1, self.tentativas + 1):
             try:
+                request_id = request_id_atual.get()
                 resposta = await self._http.get(
-                    "/internal/compras", params={"usuarioId": usuario_id, "produtoId": produto_id}
+                    "/internal/compras",
+                    params={"usuarioId": usuario_id, "produtoId": produto_id},
+                    # Repassa o id para o back registrar a chamada interna com o mesmo id.
+                    headers={} if request_id == SEM_REQUISICAO else {"X-Request-Id": request_id},
                 )
                 if resposta.status_code >= 500:
                     raise _ErroTemporario(f"HTTP {resposta.status_code}")

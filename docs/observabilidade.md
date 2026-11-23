@@ -16,14 +16,18 @@ Todos os serviços escrevem logs na saída padrão, lidos com `docker compose lo
 | `avaliacoes.http` | Cada requisição ao serviço de avaliações: método, rota, status e duração | Mesmo papel do `[http]` no back |
 | `avaliacoes.circuit_breaker` | `ABERTO após 3 falha(s)`, `MEIO-ABERTO`, `FECHADO` | Mudanças de estado do circuit breaker |
 
-O id da requisição também volta para o cliente no header `X-Request-Id`, e aparece na resposta de erro 500. Isso permite achar no log exatamente a requisição de que um usuário está reclamando.
+### Id de requisição (correlação entre serviços)
+
+O **Nginx gera um id único** para cada requisição (`$request_id`) e o envia no header `X-Request-Id`. O back e o serviço de avaliações **reaproveitam** esse id em vez de gerar outro, e o serviço de avaliações o **repassa** ao back quando faz a consulta interna `/internal/compras`. Assim, todas as linhas de log de uma mesma requisição, nos dois serviços, têm o mesmo id. Nos logs das avaliações, ele aparece entre colchetes depois do nome do módulo; fora de uma requisição (inicialização, eventos), aparece `[-]`.
+
+O id também volta para o cliente no header `X-Request-Id` e aparece na resposta de erro 500. Isso permite achar no log exatamente a requisição de que um usuário está reclamando. Ids recebidos por header são validados (letras, números, `_` e `-`, até 64 caracteres), para ninguém injetar texto nos logs.
 
 **Comandos úteis:**
 
 ```bash
 docker compose logs -f backend avaliacoes      # acompanhar os dois serviços
 docker compose logs backend | grep ERROR       # só erros do back
-docker compose logs backend | grep a1b2c3d4    # tudo de uma requisição específica
+docker compose logs backend avaliacoes | grep <id>   # uma requisição nos dois serviços
 ```
 
 ## 2. Métricas a coletar
@@ -36,20 +40,19 @@ docker compose logs backend | grep a1b2c3d4    # tudo de uma requisição espec�
 | Taxa de acerto do cache | `HIT` ÷ (`HIT` + `MISS`) | SLO 6 |
 | Eventos publicados × recebidos | `PUBLICADO` × `RECEBIDO` | SLO 5 |
 | Estado do circuit breaker | log do circuit breaker | Detectar o back instável |
-| Saúde dos containers | healthchecks e `/avaliacoes/health` | SLO 4 |
+| Saúde dos serviços | healthchecks, `/health` (back) e `/avaliacoes/health` | SLO 4 |
 | CPU, memória e reinícios dos containers | `docker stats` / `docker compose ps` | Capacidade e estabilidade |
 
 ## 3. Alertas sugeridos
 
 - Taxa de 5xx acima de 1% por 5 minutos.
 - p95 de leitura acima de 300 ms por 10 minutos.
-- `/avaliacoes/health` em `degradado` ou `fora`.
+- `/health` (back) ou `/avaliacoes/health` em `degradado` ou `fora`.
 - Circuit breaker em `ABERTO`.
 - Container reiniciando repetidamente.
 
 ## 4. Próximos passos
 
 1. **Logs estruturados em JSON**, para facilitar filtrar e agregar.
-2. **Propagar o `X-Request-Id`** do back para o serviço de avaliações, para seguir um fluxo de ponta a ponta nos dois serviços.
-3. **Coleta automática:** expor um endpoint `/metrics` (Prometheus) e montar painéis (Grafana), ou centralizar os logs (por exemplo, Loki).
-4. **Rota de saúde no back** (como a do serviço de avaliações) com healthcheck no compose.
+2. **Coleta automática:** expor um endpoint `/metrics` (Prometheus) e montar painéis (Grafana), ou centralizar os logs (por exemplo, Loki).
+3. **Levar o id de requisição para os eventos:** hoje ele acompanha as chamadas HTTP; incluí-lo no envelope do `pedido.entregue` ligaria também o `PUBLICADO` do back ao `RECEBIDO` das avaliações pelo mesmo id de requisição.

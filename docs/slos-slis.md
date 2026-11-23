@@ -13,7 +13,7 @@ As metas abaixo são compatíveis com um projeto acadêmico rodando numa única 
 | 1 | **Disponibilidade da API:** % de requisições sem erro 5xx | Log `[http]` do back (nível `ERROR` para status ≥ 500) | ≥ 99% por mês |
 | 2 | **Latência de leitura:** p95 do tempo de resposta dos `GET` de catálogo | Duração em ms no log `[http]` | p95 < 300 ms |
 | 3 | **Latência de escrita:** p95 de criação e edição (pedidos, produtos, avaliações) | Duração em ms no log `[http]` | p95 < 800 ms |
-| 4 | **Saúde do serviço de avaliações:** % das checagens de `/health` com resposta 200 | Healthcheck do Docker (a cada 10 s) | ≥ 99% por mês |
+| 4 | **Saúde dos serviços:** % das checagens de `/health` (back) e `/avaliacoes/health` com resposta 200 | Healthcheck do Docker (a cada 10 s) | ≥ 99% por mês, para cada serviço |
 | 5 | **Entrega de eventos:** % de `pedido.entregue` publicados que foram recebidos | Comparar logs `PUBLICADO` (back) e `RECEBIDO` (avaliações) pelo id do evento | ≥ 99%; o restante é coberto pela consulta HTTP de reserva |
 | 6 | **Eficiência do cache:** % de leituras atendidas pelo Redis | Contagem de `[cache] HIT` ÷ (`HIT` + `MISS`) | ≥ 70% nas listagens |
 

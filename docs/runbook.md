@@ -13,7 +13,7 @@ Guia rápido do que fazer quando o sistema apresenta problemas. Os comandos deve
    ```bash
    docker compose logs --tail=100 <serviço>     # nginx, frontend, backend, avaliacoes, database, avaliacoes-db, redis
    ```
-3. **Checar a saúde do serviço de avaliações:** `https://pedacodeceu.local/api/avaliacoes/health`.
+3. **Checar a saúde dos serviços:** `https://pedacodeceu.local/api/health` (back) e `https://pedacodeceu.local/api/avaliacoes/health` (avaliações). Os dois mostram o estado do banco e do Redis.
 4. **Houve deploy recente?** Se o problema começou logo depois de uma versão nova, considere o **rollback** (ver [estratégia de deploy](estrategia-de-deploy.md)) antes de investigar.
 
 ## Problemas comuns
@@ -21,8 +21,8 @@ Guia rápido do que fazer quando o sistema apresenta problemas. Os comandos deve
 | Sintoma | Causa provável | O que fazer |
 |---|---|---|
 | **Site não abre** (conexão recusada) | `nginx-proxy` parado | `docker compose up -d nginx`. Se não subir, verificar os certificados em `nginx/certs/` e a sintaxe com `docker compose exec nginx nginx -t` |
-| **Site abre, mas a API dá 502 Bad Gateway** | `pedaco-back` parado ou reiniciando | `docker compose logs backend`; procurar erro de conexão com MySQL/Redis ou variável de ambiente faltando. Depois, `docker compose restart backend` |
-| **Erros 500 em várias telas** | Falha no back ou no banco | Pegar o `requestId` da resposta de erro e buscar: `docker compose logs backend \| grep <requestId>` |
+| **Site abre, mas a API dá 502 Bad Gateway** | `pedaco-back` parado, reiniciando ou `unhealthy` | `docker compose logs backend`; procurar erro de conexão com MySQL/Redis ou variável de ambiente faltando. Depois, `docker compose restart backend` |
+| **Erros 500 em várias telas** | Falha no back ou no banco | Pegar o `requestId` da resposta de erro e buscar nos dois serviços: `docker compose logs backend avaliacoes \| grep <requestId>` |
 | **Login e listagens falham, back reclama de banco** | `mysql-db` fora | `docker compose ps database`; `docker compose logs database`; `docker compose restart database`. O back espera o healthcheck do banco |
 | **Sistema lento, logs com "erro ao ler" do cache** | Redis fora | O sistema segue funcionando pelo banco (mais lento). `docker compose restart redis`; o assinante de eventos reconecta sozinho |
 | **`/avaliacoes/health` diz `degradado`** | Redis fora | Mesmo procedimento da linha anterior |
