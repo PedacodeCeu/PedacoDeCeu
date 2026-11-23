@@ -12,9 +12,9 @@ Estratégias **já implementadas** no código, que mantêm o sistema funcionando
 | 6 | **Reconexão automática do assinante** | Avaliações (`events/assinante.py`) | Se a conexão com o Redis cair, o assinante tenta de novo com espera crescente (1 s, 2 s, 4 s... até 30 s) |
 | 7 | **Processamento idempotente de eventos** | Avaliações | A tabela `compras_verificadas` usa (`usuario_id`, `produto_id`) como chave: receber o mesmo evento duas vezes não duplica dados |
 | 8 | **Isolamento de falhas no consumidor** | Avaliações | Um evento com erro é registrado em log e descartado, sem derrubar o assinante |
-| 9 | **Health check com estado degradado** | Avaliações (`/avaliacoes/health`) | Retorna `ok`, `degradado` (Redis fora, mas banco OK: continua no ar) ou `fora` (banco fora: HTTP 503) |
-| 10 | **Healthchecks e ordem de inicialização** | `docker-compose.yml` | MySQL, Postgres, Redis e avaliações têm healthcheck. Os serviços só sobem depois que as dependências estão saudáveis (`depends_on: condition: service_healthy`) |
-| 11 | **Reinício automático** | `docker-compose.yml` | `restart: always` nos bancos, no Redis, no back e no serviço de avaliações |
+| 9 | **Health check com estado degradado** | Back (`/health`) e avaliações (`/avaliacoes/health`) | Os dois verificam o banco e o Redis e retornam `ok`, `degradado` (Redis fora, mas banco OK: continua no ar, HTTP 200) ou `fora` (banco fora: HTTP 503). No back, cada verificação tem limite de 2 s, para uma dependência travada não travar o health check junto |
+| 10 | **Healthchecks e ordem de inicialização** | `docker-compose.yml` | MySQL, Postgres, Redis, back e avaliações têm healthcheck. Cada serviço só sobe depois que as dependências estão saudáveis (`depends_on: condition: service_healthy`); o Nginx, por exemplo, só começa a receber tráfego quando o back e as avaliações respondem de verdade |
+| 11 | **Reinício automático** | `docker-compose.yml` | `restart: always` em todos os containers: bancos, Redis, back, serviço de avaliações, front e Nginx |
 | 12 | **Transações** | Back (`services/pedido.service.ts`) | Pedido e itens são gravados juntos; uma falha no meio desfaz tudo. Eventos só são publicados depois do commit |
 
 ## Como foi validado
@@ -23,6 +23,5 @@ O arquivo `PedacodeCeu-Avaliacoes/tests/test_resiliencia.py` testa o retry, o ci
 
 ## Limitações conhecidas
 
-- O back Node não tem rota de saúde nem healthcheck no compose; o front e o Nginx não têm `restart: always`.
 - Os eventos do Redis Pub/Sub não são guardados: a perda é compensada pelo fallback (item 4), não evitada.
 - Tudo roda numa única máquina: se ela cair, o sistema inteiro cai (ver o [runbook](runbook.md)).

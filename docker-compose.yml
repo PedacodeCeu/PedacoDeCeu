@@ -64,6 +64,12 @@ services:
         condition: service_healthy
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   avaliacoes-db:
     image: postgres:16-alpine
@@ -125,6 +131,7 @@ services:
       - backend
     networks:
       - app-network
+    restart: always
 
   nginx:
     image: nginx:alpine
@@ -135,10 +142,14 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/certs:/etc/nginx/certs
+    restart: always
     depends_on:
-      - frontend
-      - backend
-      - avaliacoes
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_healthy
+      avaliacoes:
+        condition: service_healthy
     networks:
       - app-network
 

@@ -4,8 +4,11 @@ import asyncio
 import logging
 import time
 from contextlib import asynccontextmanager, suppress
+import re
+import uuid
 
 from fastapi import FastAPI, Request
+from app.request_context import request_id_atual
 
 from app.clients.pedidos_client import get_pedidos_client
 from app.config import settings
@@ -56,14 +59,25 @@ app = FastAPI(
 registrar_handlers(app)
 
 
+_ID_VALIDO = re.compile(r"^[\w-]{1,64}$")
+
+
 @app.middleware("http")
 async def log_requisicoes(request: Request, call_next):
-    inicio = time.perf_counter()
-    resposta = await call_next(request)
-    ms = (time.perf_counter() - inicio) * 1000
-    if not request.url.path.endswith("/health"):  # o healthcheck roda a cada poucos segundos
-        log_http.info("%s %s -> %d (%.1f ms)", request.method, request.url.path, resposta.status_code, ms)
-    return resposta
+    # Reaproveita o id do Nginx; só gera um novo se não vier (ex.: chamada direta na rede interna).
+    recebido = request.headers.get("X-Request-Id", "")
+    request_id = recebido if _ID_VALIDO.match(recebido) else uuid.uuid4().hex[:8]
+    token = request_id_atual.set(request_id)
+    try:
+        inicio = time.perf_counter()
+        resposta = await call_next(request)
+        ms = (time.perf_counter() - inicio) * 1000
+        resposta.headers["X-Request-Id"] = request_id
+        if not request.url.path.endswith("/health"):  # o healthcheck roda a cada poucos segundos
+            log_http.info("%s %s -> %d (%.1f ms)", request.method, request.url.path, resposta.status_code, ms)
+        return resposta
+    finally:
+        request_id_atual.reset(token)
 
 
 app.include_router(avaliacoes.router)

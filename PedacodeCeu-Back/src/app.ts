@@ -14,6 +14,7 @@ import InternoController from "./controllers/interno.controller";
 import { requestLogger } from "./middlewares/requestLogger";
 import { errorHandler, rotaNaoEncontrada } from "./middlewares/errorHandler";
 import { limparUploadEmErro } from "./middlewares/limparUpload";
+import HealthController from "./controllers/health.controller";
 
 const app = express();
 app.use(requestLogger);
@@ -25,6 +26,7 @@ app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 const router: Router = Router();
 
+router.get("/health", HealthController.check);
 router.post("/auth/login", AuthController.login);
 router.post("/auth/login/admin", AuthController.loginAdmin);
 
@@ -62,4 +64,4 @@ app.use(rotaNaoEncontrada);
 app.use(limparUploadEmErro);
 app.use(errorHandler);
 
-export default app;
+export default app;
