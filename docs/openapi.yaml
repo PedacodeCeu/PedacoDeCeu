@@ -1,0 +1,1065 @@
+openapi: 3.0.3
+info:
+  title: Pedaço de Céu - API do back-end
+  version: 1.5.0
+  description: 'Rotas protegidas usam `Authorization: Bearer <token>`. Erros seguem o formato `{"message": "..."}`.'
+servers:
+- url: https://pedacodeceu.local/api
+  description: Pelo Nginx (ponto único de entrada)
+tags:
+- name: Saúde
+- name: Autenticação
+- name: Usuários
+- name: Categorias
+- name: Produtos
+- name: Pedidos
+- name: Interno
+paths:
+  /health:
+    get:
+      tags:
+      - Saúde
+      summary: Estado do serviço
+      responses:
+        '200':
+          description: Serviço no ar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespostaHealth'
+              example:
+                status: ok
+                banco: true
+                redis: true
+        '503':
+          description: Banco fora do ar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespostaHealth'
+              example:
+                status: fora
+                banco: false
+                redis: true
+      description: 'ok: tudo respondeu. degradado: Redis fora (HTTP 200). fora: banco fora (HTTP 503).'
+  /auth/login:
+    post:
+      tags:
+      - Autenticação
+      summary: Login do site
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+            example:
+              email: cliente@exemplo.com
+              senha: Senha@123
+      responses:
+        '200':
+          description: Login realizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespostaAuth'
+        '400':
+          $ref: '#/components/responses/DadosInvalidos'
+        '401':
+          description: Credenciais incorretas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+  /auth/login/admin:
+    post:
+      tags:
+      - Autenticação
+      summary: Login da área administrativa
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+      responses:
+        '200':
+          description: Login realizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespostaAuth'
+        '400':
+          $ref: '#/components/responses/DadosInvalidos'
+        '401':
+          description: Credenciais incorretas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+        '403':
+          $ref: '#/components/responses/SomenteAdmin'
+  /usuarios:
+    post:
+      tags:
+      - Usuários
+      summary: Cadastrar usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarUsuario'
+      responses:
+        '201':
+          description: Usuário criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioPublico'
+        '400':
+          $ref: '#/components/responses/DadosInvalidos'
+        '409':
+          description: CPF ou e-mail já cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+    get:
+      tags:
+      - Usuários
+      summary: Listar usuários
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuários
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UsuarioPublico'
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '403':
+          $ref: '#/components/responses/SomenteAdmin'
+  /usuarios/{id}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    get:
+      tags:
+      - Usuários
+      summary: Buscar usuário
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Dados do usuário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioPublico'
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '403':
+          $ref: '#/components/responses/AcessoNegado'
+        '404':
+          $ref: '#/components/responses/NaoEncontrado'
+    put:
+      tags:
+      - Usuários
+      summary: Atualizar usuário
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarUsuario'
+      responses:
+        '200':
+          description: Usuário atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioAtualizado'
+        '400':
+          $ref: '#/components/responses/DadosInvalidos'
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '403':
+          $ref: '#/components/responses/AcessoNegado'
+        '404':
+          $ref: '#/components/responses/NaoEncontrado'
+        '409':
+          $ref: '#/components/responses/Conflito'
+    delete:
+      tags:
+      - Usuários
+      summary: Remover usuário
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: Usuário removido
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '403':
+          $ref: '#/components/responses/SomenteAdmin'
+        '404':
+          $ref: '#/components/responses/NaoEncontrado'
+        '409':
+          $ref: '#/components/responses/Conflito'
+  /usuarios/{id}/role:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    patch:
+      tags:
+      - Usuários
+      summary: Alterar o papel de um usuário
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlterarRole'
+      responses:
+        '200':
+          description: Papel alterado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioRole'
+        '400':
+          $ref: '#/components/responses/DadosInvalidos'
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '403':
+          $ref: '#/components/responses/SomenteAdmin'
+        '404':
+          $ref: '#/components/responses/NaoEncontrado'
+  /categorias:
+    get:
+      tags:
+      - Categorias
+      summary: Listar categorias
+      parameters:
+      - $ref: '#/components/parameters/Pagina'
+      - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Página de categorias
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriasPaginadas'
+    post:
+      tags:
+      - Categorias
+      summary: Criar categoria
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoriaEntrada'
+      responses:
+        '201':
+          description: Categoria criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Categoria'
+        '400':
+          $ref: '#/components/responses/DadosInvalidos'
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '403':
+          $ref: '#/components/responses/SomenteAdmin'
+        '409':
+          $ref: '#/components/responses/Conflito'
+  /categorias/{id}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    get:
+      tags:
+      - Categorias
+      summary: Buscar categoria
+      responses:
+        '200':
+          description: Categoria encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Categoria'
+        '404':
+          $ref: '#/components/responses/NaoEncontrado'
+    put:
+      tags:
+      - Categorias
+      summary: Atualizar categoria
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoriaEntrada'
+      responses:
+        '200':
+          description: Categoria atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Categoria'
+        '400':
+          $ref: '#/components/responses/DadosInvalidos'
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '403':
+          $ref: '#/components/responses/SomenteAdmin'
+        '404':
+          $ref: '#/components/responses/NaoEncontrado'
+        '409':
+          $ref: '#/components/responses/Conflito'
+    delete:
+      tags:
+      - Categorias
+      summary: Remover categoria
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: Categoria removida
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '403':
+          $ref: '#/components/responses/SomenteAdmin'
+        '404':
+          $ref: '#/components/responses/NaoEncontrado'
+        '409':
+          $ref: '#/components/responses/Conflito'
+  /produtos:
+    get:
+      tags:
+      - Produtos
+      summary: Listar produtos
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/Pagina'
+      - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Página de produtos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdutosPaginados'
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+    post:
+      tags:
+      - Produtos
+      summary: Criar produto
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CriarProduto'
+      responses:
+        '201':
+          description: Produto criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Produto'
+        '400':
+          $ref: '#/components/responses/DadosInvalidos'
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '403':
+          $ref: '#/components/responses/SomenteAdmin'
+        '404':
+          description: Categoria não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+  /produtos/{id}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    get:
+      tags:
+      - Produtos
+      summary: Buscar produto
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Produto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Produto'
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '404':
+          $ref: '#/components/responses/NaoEncontrado'
+    put:
+      tags:
+      - Produtos
+      summary: Atualizar produto
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AtualizarProduto'
+      responses:
+        '200':
+          description: Produto atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Produto'
+        '400':
+          $ref: '#/components/responses/DadosInvalidos'
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '403':
+          $ref: '#/components/responses/SomenteAdmin'
+        '404':
+          $ref: '#/components/responses/NaoEncontrado'
+    delete:
+      tags:
+      - Produtos
+      summary: Remover produto
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: Produto removido
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '403':
+          $ref: '#/components/responses/SomenteAdmin'
+        '404':
+          $ref: '#/components/responses/NaoEncontrado'
+        '409':
+          $ref: '#/components/responses/Conflito'
+  /pedidos:
+    get:
+      tags:
+      - Pedidos
+      summary: Listar pedidos
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/Pagina'
+      - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Página de pedidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PedidosPaginados'
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+    post:
+      tags:
+      - Pedidos
+      summary: Criar pedido
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarPedido'
+            example:
+              itens:
+              - produtoId: 5f0c1e8a-0000-4000-8000-000000000001
+                quantidade: 2
+      responses:
+        '201':
+          description: Pedido criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '400':
+          $ref: '#/components/responses/DadosInvalidos'
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '404':
+          description: Produto não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+  /pedidos/{id}:
+    parameters:
+    - $ref: '#/components/parameters/Id'
+    get:
+      tags:
+      - Pedidos
+      summary: Buscar pedido
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Pedido encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '403':
+          $ref: '#/components/responses/AcessoNegado'
+        '404':
+          $ref: '#/components/responses/NaoEncontrado'
+    put:
+      tags:
+      - Pedidos
+      summary: Atualizar pedido ou confirmar entrega
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarPedido'
+            example:
+              status: entregue
+      responses:
+        '200':
+          description: Pedido atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '400':
+          $ref: '#/components/responses/DadosInvalidos'
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '403':
+          $ref: '#/components/responses/AcessoNegado'
+        '404':
+          $ref: '#/components/responses/NaoEncontrado'
+      description: Administrador altera status e itens. O cliente só confirma a entrega (status entregue), com o pedido confirmado.
+    delete:
+      tags:
+      - Pedidos
+      summary: Remover pedido
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: Pedido removido
+        '401':
+          $ref: '#/components/responses/NaoAutenticado'
+        '403':
+          $ref: '#/components/responses/AcessoNegado'
+        '404':
+          $ref: '#/components/responses/NaoEncontrado'
+  /internal/compras:
+    servers:
+    - url: http://backend:3000
+      description: Rede interna do Docker (o Nginx bloqueia /api/internal/)
+    get:
+      tags:
+      - Interno
+      summary: Verificar se um usuário recebeu um produto
+      security:
+      - internalToken: []
+      parameters:
+      - name: usuarioId
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: produtoId
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Resultado da verificação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespostaVerificarCompra'
+        '400':
+          $ref: '#/components/responses/DadosInvalidos'
+        '401':
+          description: Token interno inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+        '503':
+          description: Rota interna não configurada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+      description: Uso entre serviços. Exige o header X-Internal-Token.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    internalToken:
+      type: apiKey
+      in: header
+      name: X-Internal-Token
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    Pagina:
+      name: pagina
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Limite:
+      name: limite
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 10
+  responses:
+    DadosInvalidos:
+      description: Dados inválidos
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erro'
+          example:
+            message: Nome é obrigatório
+    NaoAutenticado:
+      description: Token ausente, inválido ou expirado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erro'
+          example:
+            message: Token não fornecido
+    SomenteAdmin:
+      description: Acesso restrito a administradores
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erro'
+          example:
+            message: Acesso restrito a administradores
+    AcessoNegado:
+      description: Sem permissão para este recurso
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erro'
+          example:
+            message: Acesso negado
+    NaoEncontrado:
+      description: Registro não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erro'
+          example:
+            message: Registro não encontrado
+    Conflito:
+      description: Valor duplicado ou registro em uso
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erro'
+          example:
+            message: Registro está em uso por outros dados e não pode ser removido
+  schemas:
+    Erro:
+      type: object
+      required:
+      - message
+      properties:
+        message:
+          type: string
+        requestId:
+          type: string
+    RespostaHealth:
+      type: object
+      required:
+      - status
+      - banco
+      - redis
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degradado
+          - fora
+        banco:
+          type: boolean
+        redis:
+          type: boolean
+    Login:
+      type: object
+      required:
+      - email
+      - senha
+      properties:
+        email:
+          type: string
+          format: email
+        senha:
+          type: string
+    RespostaAuth:
+      type: object
+      required:
+      - token
+      - usuario
+      properties:
+        token:
+          type: string
+        usuario:
+          $ref: '#/components/schemas/UsuarioSessao'
+    UsuarioSessao:
+      type: object
+      properties:
+        id:
+          type: string
+        nome:
+          type: string
+        email:
+          type: string
+        cpf:
+          type: string
+        role:
+          type: string
+          enum:
+          - usuario
+          - admin
+    CriarUsuario:
+      type: object
+      required:
+      - nome
+      - email
+      - senha
+      - cpf
+      properties:
+        nome:
+          type: string
+        email:
+          type: string
+          format: email
+        senha:
+          type: string
+          format: password
+          description: Mínimo de 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.
+        cpf:
+          type: string
+    AtualizarUsuario:
+      type: object
+      required:
+      - nome
+      - cpf
+      properties:
+        nome:
+          type: string
+        senha:
+          type: string
+          format: password
+          nullable: true
+        cpf:
+          type: string
+    AlterarRole:
+      type: object
+      required:
+      - role
+      properties:
+        role:
+          type: string
+          enum:
+          - usuario
+          - admin
+    UsuarioPublico:
+      type: object
+      properties:
+        id:
+          type: string
+        nome:
+          type: string
+        email:
+          type: string
+        cpf:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    UsuarioAtualizado:
+      type: object
+      properties:
+        id:
+          type: string
+        nome:
+          type: string
+        email:
+          type: string
+        cpf:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+    UsuarioRole:
+      type: object
+      properties:
+        id:
+          type: string
+        nome:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+          - usuario
+          - admin
+    Categoria:
+      type: object
+      properties:
+        id:
+          type: string
+        nome:
+          type: string
+    CategoriaEntrada:
+      type: object
+      required:
+      - nome
+      properties:
+        nome:
+          type: string
+    Produto:
+      type: object
+      properties:
+        id:
+          type: string
+        nome:
+          type: string
+        descricao:
+          type: string
+        preco:
+          type: number
+        imagem:
+          type: string
+          nullable: true
+          description: Nome do arquivo da imagem. Ela é servida em `/uploads/{imagem}`.
+        destaque:
+          type: boolean
+        ativo:
+          type: boolean
+        categoriaId:
+          type: string
+        categoria:
+          $ref: '#/components/schemas/Categoria'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CriarProduto:
+      type: object
+      required:
+      - nome
+      - descricao
+      - preco
+      - categoriaId
+      properties:
+        nome:
+          type: string
+        descricao:
+          type: string
+        preco:
+          type: number
+        destaque:
+          type: boolean
+        categoriaId:
+          type: string
+        imagem:
+          type: string
+          format: binary
+    AtualizarProduto:
+      allOf:
+      - $ref: '#/components/schemas/CriarProduto'
+      - type: object
+        properties:
+          ativo:
+            type: boolean
+            description: Ausente vale falso.
+    CriarPedido:
+      type: object
+      required:
+      - itens
+      properties:
+        status:
+          type: string
+          enum:
+          - pendente
+          - confirmado
+          - entregue
+          - cancelado
+        itens:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ItemPedidoEntrada'
+    AtualizarPedido:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - pendente
+          - confirmado
+          - entregue
+          - cancelado
+        itens:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemPedidoEntrada'
+    ItemPedidoEntrada:
+      type: object
+      required:
+      - produtoId
+      - quantidade
+      properties:
+        produtoId:
+          type: string
+        quantidade:
+          type: integer
+          minimum: 1
+    ItemPedido:
+      type: object
+      properties:
+        id:
+          type: string
+        pedidoId:
+          type: string
+        produtoId:
+          type: string
+        quantidade:
+          type: integer
+        precoUnitario:
+          type: number
+        produto:
+          $ref: '#/components/schemas/Produto'
+    Pedido:
+      type: object
+      properties:
+        id:
+          type: string
+        usuarioId:
+          type: string
+        status:
+          type: string
+          enum:
+          - pendente
+          - confirmado
+          - entregue
+          - cancelado
+        total:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        itens:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemPedido'
+        usuario:
+          type: object
+          properties:
+            id:
+              type: string
+            nome:
+              type: string
+            email:
+              type: string
+    MetaPaginacao:
+      type: object
+      properties:
+        total:
+          type: integer
+        pagina:
+          type: integer
+        limite:
+          type: integer
+        totalPaginas:
+          type: integer
+    CategoriasPaginadas:
+      type: object
+      properties:
+        dados:
+          type: array
+          items:
+            $ref: '#/components/schemas/Categoria'
+        meta:
+          $ref: '#/components/schemas/MetaPaginacao'
+    ProdutosPaginados:
+      type: object
+      properties:
+        dados:
+          type: array
+          items:
+            $ref: '#/components/schemas/Produto'
+        meta:
+          $ref: '#/components/schemas/MetaPaginacao'
+    PedidosPaginados:
+      type: object
+      properties:
+        dados:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pedido'
+        meta:
+          $ref: '#/components/schemas/MetaPaginacao'
+    RespostaVerificarCompra:
+      type: object
+      properties:
+        comprou:
+          type: boolean
+        pedidoId:
+          type: string
+          nullable: true
