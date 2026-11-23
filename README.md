@@ -4,6 +4,21 @@ Catálogo web fictício desenvolvido como projeto de portfólio. A aplicação p
 
 **Stack:** React · Node.js · MySQL · Redis · Python (FastAPI) · PostgreSQL · Nginx · Docker · Playwright · TypeScript
 
+## Documentação
+
+A documentação de arquitetura está em [`docs/`](docs/):
+
+- [Diagramas C4 (Contexto e Containers)](docs/c4.md)
+- [Decisões de arquitetura (ADRs)](docs/adr/)
+- [Quality Scenarios](docs/quality-scenarios.md)
+- [DDD: Context Map, Bounded Contexts e Aggregates](docs/ddd.md)
+- [SLOs e SLIs](docs/slos-slis.md)
+- [Estratégias de resiliência](docs/resiliencia.md)
+- [Plano de observabilidade](docs/observabilidade.md)
+- [Estratégia de deploy](docs/estrategia-de-deploy.md)
+- [Runbook de incidentes](docs/runbook.md)
+- [Análise Cynefin](docs/cynefin.md)
+
 ---
 
 ## Como rodar localmente
