@@ -18,6 +18,7 @@ A documentação de arquitetura está em [`docs/`](docs/):
 - [Estratégia de deploy](docs/estrategia-de-deploy.md)
 - [Runbook de incidentes](docs/runbook.md)
 - [Análise Cynefin](docs/cynefin.md)
+- [API do back-end (OpenAPI)](docs/openapi.yaml)
 
 ---
 
